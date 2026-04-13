@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NeuralForge — AI Automation Agency</title>
+  <meta name="description" content="NeuralForge builds intelligent automation systems, AI agents, and data pipelines that transform how modern businesses operate." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+  <style>
+    :root {
+      --bg:#0a0a0f;--bg-alt:#0d0d14;--cyan:#00f0ff;--cyan-dim:rgba(0,240,255,.15);
+      --violet:#8b5cf6;--violet-dim:rgba(139,92,246,.15);--white:#f0f4ff;
+      --muted:rgba(240,244,255,.45);--border:rgba(240,244,255,.08);
+      --glass:rgba(255,255,255,.04);--glass-hover:rgba(255,255,255,.08);
+      --font-display:'Syne',sans-serif;--font-body:'DM Sans',sans-serif;
+      --radius:16px;--radius-sm:8px;--max-w:1200px;
+      --ease-out:cubic-bezier(.22,1,.36,1);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--white);font-family:var(--font-body);font-size:16px;line-height:1.6;overflow-x:hidden;cursor:none}
+    ::-webkit-scrollbar{width:4px}
+    ::-webkit-scrollbar-track{background:var(--bg)}
+    ::-webkit-scrollbar-thumb{background:var(--violet);border-radius:2px}
+    h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.1}
+    h1{font-size:clamp(2.8rem,6vw,5.5rem);letter-spacing:-.03em}
+    h2{font-size:clamp(2rem,4vw,3.2rem);letter-spacing:-.02em}
+    h3{font-size:clamp(1.2rem,2vw,1.5rem)}
+    p{font-weight:300;color:var(--muted)}
+    a{color:inherit;text-decoration:none}
+    .gradient-text{background:linear-gradient(135deg,var(--cyan) 0%,var(--violet) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .container{max-width:var(--max-w);margin:0 auto;padding:0 24px}
+    .section{padding:120px 0;position:relative}
+    .section--tight{padding:80px 0}
+
+    /* CURSOR */
+    #cursor{position:fixed;top:0;left:0;z-index:9999;pointer-events:none;mix-blend-mode:screen}
+    #cursor-dot{width:8px;height:8px;border-radius:50%;background:var(--cyan);transform:translate(-50%,-50%);transition:transform .1s,opacity .2s;box-shadow:0 0 10px var(--cyan)}
+    #cursor-ring{position:fixed;top:0;left:0;width:36px;height:36px;border:1.5px solid rgba(0,240,255,.5);border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:9998;transition:width .3s var(--ease-out),height .3s var(--ease-out),border-color .3s,transform .08s}
+    #cursor-ring.hovered{width:56px;height:56px;border-color:var(--violet);background:rgba(139,92,246,.06)}
+
+    /* TAG */
+    .tag{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-display);font-size:.7rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--cyan);border:1px solid rgba(0,240,255,.25);border-radius:100px;padding:6px 16px;margin-bottom:24px}
+    .tag::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 8px var(--cyan);animation:pulse-dot 2s infinite}
+    @keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+
+    /* BUTTONS */
+    .btn{display:inline-flex;align-items:center;gap:10px;font-family:var(--font-display);font-size:.875rem;font-weight:600;letter-spacing:.04em;cursor:none;padding:14px 28px;border-radius:100px;border:none;outline:none;transition:transform .25s var(--ease-out),box-shadow .25s;position:relative;overflow:hidden}
+    .btn::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,.12);transform:translateX(-110%) skewX(-15deg);transition:transform .4s var(--ease-out)}
+    .btn:hover::after{transform:translateX(110%) skewX(-15deg)}
+    .btn:hover{transform:translateY(-2px)}
+    .btn-primary{background:linear-gradient(135deg,var(--cyan),#0080ff);color:#000;box-shadow:0 0 24px rgba(0,240,255,.3)}
+    .btn-primary:hover{box-shadow:0 0 40px rgba(0,240,255,.5)}
+    .btn-ghost{background:var(--glass);color:var(--white);border:1px solid var(--border);backdrop-filter:blur(12px)}
+    .btn-ghost:hover{background:var(--glass-hover);border-color:rgba(255,255,255,.2)}
+    .btn-arrow::after{display:none}
+    .btn-arrow svg{transition:transform .3s var(--ease-out)}
+    .btn-arrow:hover svg{transform:translateX(4px)}
+
+    /* NAVBAR */
+    #navbar{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px 0;transition:background .4s,backdrop-filter .4s,padding .4s}
+    #navbar.scrolled{background:rgba(10,10,15,.85);backdrop-filter:blur(20px);padding:14px 0;border-bottom:1px solid var(--border)}
+    #navbar .container{display:flex;align-items:center;justify-content:space-between}
+    .nav-logo{font-family:var(--font-display);font-size:1.3rem;font-weight:800;letter-spacing:-.02em}
+    .nav-logo span{color:var(--cyan)}
+    .nav-links{display:flex;align-items:center;gap:40px;list-style:none}
+    .nav-links a{font-size:.875rem;font-weight:400;color:var(--muted);transition:color .2s;position:relative}
+    .nav-links a::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:1px;background:var(--cyan);transition:width .3s var(--ease-out)}
+    .nav-links a:hover{color:var(--white)}
+    .nav-links a:hover::after{width:100%}
+    .nav-cta{padding:10px 22px !important;font-size:.8rem !important}
+    .nav-hamburger{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:none;padding:4px}
+    .nav-hamburger span{display:block;width:24px;height:2px;background:var(--white);border-radius:2px;transition:transform .3s,opacity .3s}
+    @media(max-width:768px){.nav-links{display:none}.nav-hamburger{display:flex}}
+
+    /* MOBILE NAV */
+    #mobile-nav{position:fixed;inset:0;z-index:200;visibility:hidden;pointer-events:none}
+    #mobile-nav.open{visibility:visible;pointer-events:auto}
+    .mobile-nav-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);opacity:0;transition:opacity .35s var(--ease-out)}
+    #mobile-nav.open .mobile-nav-backdrop{opacity:1}
+    .mobile-nav-drawer{position:absolute;top:0;right:0;bottom:0;width:min(320px,85vw);background:rgba(13,13,20,.97);border-left:1px solid var(--border);backdrop-filter:blur(24px);padding:80px 32px 48px;display:flex;flex-direction:column;gap:8px;transform:translateX(100%);transition:transform .4s var(--ease-out);overflow-y:auto}
+    #mobile-nav.open .mobile-nav-drawer{transform:translateX(0)}
+    .mobile-nav-close{position:absolute;top:20px;right:20px;width:40px;height:40px;border-radius:50%;background:var(--glass);border:1px solid var(--border);color:var(--white);font-size:1.1rem;display:flex;align-items:center;justify-content:center;cursor:none;transition:background .2s,border-color .2s}
+    .mobile-nav-close:hover{background:var(--glass-hover);border-color:var(--cyan)}
+    .mobile-nav-link{display:block;padding:16px 0;font-family:var(--font-display);font-size:1.4rem;font-weight:700;color:var(--muted);border-bottom:1px solid var(--border);transition:color .25s,padding-left .25s var(--ease-out);letter-spacing:-.01em}
+    .mobile-nav-link:hover{color:var(--white);padding-left:8px}
+    .mobile-nav-link:last-of-type{border-bottom:none}
+    .mobile-nav-cta{margin-top:32px;display:block;text-align:center;padding:16px 24px;background:linear-gradient(135deg,var(--cyan),#0080ff);color:#000;font-family:var(--font-display);font-weight:700;font-size:.9rem;letter-spacing:.04em;border-radius:100px;box-shadow:0 0 24px rgba(0,240,255,.25);transition:box-shadow .3s,transform .3s}
+    .mobile-nav-cta:hover{box-shadow:0 0 40px rgba(0,240,255,.4);transform:translateY(-2px)}
+    .mobile-nav-footer{margin-top:auto;padding-top:32px;font-size:.75rem;color:var(--muted);text-align:center;letter-spacing:.06em;text-transform:uppercase}
+    .nav-hamburger.active span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+    .nav-hamburger.active span:nth-child(2){opacity:0;transform:scaleX(0)}
+    .nav-hamburger.active span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+
+    /* HERO */
+    #hero{position:relative;min-height:100vh;display:flex;align-items:center;overflow:hidden}
+    #hero-canvas{position:absolute;inset:0;z-index:0}
+    .hero-bg-gradient{position:absolute;inset:0;z-index:1;background:radial-gradient(ellipse 80% 60% at 60% 50%,rgba(0,240,255,.04) 0%,transparent 70%),radial-gradient(ellipse 60% 80% at 30% 70%,rgba(139,92,246,.06) 0%,transparent 70%);pointer-events:none}
+    .hero-content{position:relative;z-index:2;max-width:780px}
+    .hero-eyebrow{display:flex;align-items:center;gap:12px;font-size:.75rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:28px}
+    .hero-eyebrow-line{width:40px;height:1px;background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
+    .hero-headline{margin-bottom:24px}
+    .hero-headline em{font-style:normal;display:block;color:var(--cyan);text-shadow:0 0 40px rgba(0,240,255,.4)}
+    .hero-sub{font-size:1.15rem;max-width:520px;margin-bottom:48px;color:var(--muted)}
+    .hero-ctas{display:flex;gap:16px;flex-wrap:wrap}
+    .hero-scroll-hint{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);z-index:2;display:flex;flex-direction:column;align-items:center;gap:8px;font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted)}
+    .hero-scroll-line{width:1px;height:48px;background:linear-gradient(to bottom,var(--cyan),transparent);animation:scroll-line 1.8s ease-in-out infinite}
+    @keyframes scroll-line{0%{opacity:0;transform:scaleY(0);transform-origin:top}50%{opacity:1;transform:scaleY(1);transform-origin:top}100%{opacity:0;transform:scaleY(1);transform-origin:bottom}}
+
+    /* LOGO STRIP */
+    #logos{padding:56px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);overflow:hidden}
+    .logo-strip-label{text-align:center;font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:32px}
+    .logo-track-wrap{overflow:hidden;mask-image:linear-gradient(to right,transparent,black 10%,black 90%,transparent)}
+    .logo-track{display:flex;gap:64px;align-items:center;width:max-content;animation:logo-scroll 24s linear infinite}
+    .logo-track:hover{animation-play-state:paused}
+    @keyframes logo-scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+    .logo-item{font-family:var(--font-display);font-size:1rem;font-weight:700;color:rgba(240,244,255,.2);letter-spacing:.05em;white-space:nowrap;transition:color .3s}
+    .logo-item:hover{color:rgba(240,244,255,.6)}
+
+    /* SERVICES */
+    .section-header{margin-bottom:64px}
+    .section-header h2{margin-bottom:16px}
+    .section-header p{font-size:1.1rem;max-width:560px}
+    .services-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px}
+    .service-card{background:var(--glass);border:1px solid var(--border);border-radius:var(--radius);padding:40px;position:relative;overflow:hidden;cursor:none;transition:border-color .3s,box-shadow .3s,background .3s;transform-style:preserve-3d;will-change:transform}
+    .service-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--cyan-dim),var(--violet-dim));opacity:0;transition:opacity .4s}
+    .service-card:hover{border-color:rgba(0,240,255,.3);box-shadow:0 0 40px rgba(0,240,255,.08),inset 0 0 40px rgba(0,240,255,.03);background:var(--glass-hover)}
+    .service-card:hover::before{opacity:1}
+    .service-icon{width:56px;height:56px;border-radius:14px;background:var(--cyan-dim);border:1px solid rgba(0,240,255,.2);display:flex;align-items:center;justify-content:center;margin-bottom:24px;font-size:1.5rem;position:relative;z-index:1;transition:box-shadow .3s}
+    .service-card:hover .service-icon{box-shadow:0 0 24px rgba(0,240,255,.3)}
+    .service-card h3{margin-bottom:12px;position:relative;z-index:1;transition:color .3s}
+    .service-card:hover h3{color:var(--cyan)}
+    .service-card p{font-size:.9rem;position:relative;z-index:1}
+    .service-card .card-num{position:absolute;bottom:24px;right:24px;font-family:var(--font-display);font-size:4rem;font-weight:800;color:rgba(255,255,255,.04);line-height:1;transition:color .3s}
+    .service-card:hover .card-num{color:rgba(0,240,255,.06)}
+
+    /* PROCESS */
+    #process{background:var(--bg-alt)}
+    .process-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;position:relative}
+    .process-grid::before{content:'';position:absolute;top:28px;left:calc(12.5% + 28px);right:calc(12.5% + 28px);height:1px;background:linear-gradient(to right,var(--cyan),var(--violet));opacity:.3}
+    .process-connector{position:absolute;top:28px;left:calc(12.5% + 28px);right:calc(12.5% + 28px);height:2px;background:linear-gradient(to right,var(--cyan),var(--violet));transform-origin:left;transform:scaleX(0);transition:transform 1.2s var(--ease-out);z-index:1}
+    .process-connector.visible{transform:scaleX(1)}
+    .process-step{padding:0 24px;text-align:center;display:flex;flex-direction:column;align-items:center}
+    .step-circle{width:56px;height:56px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:.875rem;font-weight:700;color:var(--muted);margin-bottom:24px;background:var(--bg-alt);position:relative;z-index:2;transition:border-color .4s,color .4s,box-shadow .4s}
+    .process-step.active .step-circle{border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 20px rgba(0,240,255,.25)}
+    .process-step h3{font-size:1rem;margin-bottom:12px}
+    .process-step p{font-size:.875rem}
+    @media(max-width:768px){.process-grid{grid-template-columns:1fr 1fr;gap:40px}.process-grid::before,.process-connector{display:none}}
+
+    /* STATS */
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:24px}
+    .stat-card{background:var(--glass);border:1px solid var(--border);border-radius:var(--radius);padding:40px 32px;text-align:center;position:relative;overflow:hidden;transition:border-color .3s,transform .3s}
+    .stat-card:hover{border-color:rgba(139,92,246,.35);transform:translateY(-4px)}
+    .stat-card::after{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:80px;height:1px;background:linear-gradient(to right,transparent,var(--violet),transparent)}
+    .stat-icon{font-size:2rem;margin-bottom:16px;display:block;filter:drop-shadow(0 0 12px var(--violet))}
+    .stat-num{font-family:var(--font-display);font-size:3.5rem;font-weight:800;line-height:1;margin-bottom:8px;background:linear-gradient(135deg,var(--white),var(--violet));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .stat-label{font-size:.875rem;color:var(--muted)}
+
+    /* TESTIMONIALS */
+    #testimonials{background:var(--bg-alt);overflow:hidden}
+    .testi-carousel{position:relative;overflow:hidden}
+    .testi-track{display:flex;gap:24px;transition:transform .6s var(--ease-out)}
+    .testi-card{flex:0 0 calc(33.333% - 16px);background:var(--glass);border:1px solid var(--border);border-radius:var(--radius);padding:40px;backdrop-filter:blur(20px);transition:border-color .3s}
+    @media(max-width:900px){.testi-card{flex:0 0 calc(50% - 12px)}}
+    @media(max-width:600px){.testi-card{flex:0 0 100%}}
+    .testi-card:hover{border-color:rgba(139,92,246,.3)}
+    .testi-stars{color:var(--cyan);font-size:.875rem;margin-bottom:16px;letter-spacing:2px}
+    .testi-quote{font-size:1rem;font-weight:300;margin-bottom:28px;color:var(--white);font-style:italic;line-height:1.7}
+    .testi-author{display:flex;align-items:center;gap:14px}
+    .testi-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--cyan-dim),var(--violet-dim));border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:.875rem;color:var(--cyan)}
+    .testi-name{font-family:var(--font-display);font-size:.9rem;font-weight:600}
+    .testi-role{font-size:.8rem;color:var(--muted)}
+    .testi-controls{display:flex;align-items:center;gap:16px;margin-top:40px;justify-content:center}
+    .testi-btn{width:44px;height:44px;border-radius:50%;background:var(--glass);border:1px solid var(--border);color:var(--white);cursor:none;display:flex;align-items:center;justify-content:center;transition:background .2s,border-color .2s;font-size:1rem}
+    .testi-btn:hover{background:var(--glass-hover);border-color:var(--violet)}
+    .testi-dots{display:flex;gap:8px}
+    .testi-dot{width:6px;height:6px;border-radius:3px;background:var(--border);transition:background .3s,width .3s;cursor:pointer}
+    .testi-dot.active{background:var(--cyan);width:20px}
+
+    /* CTA */
+    #cta-section{position:relative;overflow:hidden;text-align:center}
+    .cta-glow{position:absolute;inset:0;background:radial-gradient(ellipse 80% 100% at 50% 100%,rgba(139,92,246,.18) 0%,transparent 70%),radial-gradient(ellipse 60% 80% at 30% 0%,rgba(0,240,255,.08) 0%,transparent 70%)}
+    #cta-section h2{margin-bottom:20px}
+    #cta-section p{font-size:1.1rem;max-width:520px;margin:0 auto 40px}
+    .cta-actions{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+
+    /* FOOTER */
+    footer{border-top:1px solid var(--border);padding:80px 0 40px}
+    .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 2fr;gap:64px;margin-bottom:64px}
+    @media(max-width:900px){.footer-grid{grid-template-columns:1fr 1fr;gap:40px}}
+    @media(max-width:560px){.footer-grid{grid-template-columns:1fr}}
+    .footer-brand p{font-size:.9rem;margin-top:16px;max-width:240px}
+    .footer-socials{display:flex;gap:12px;margin-top:24px}
+    .social-icon{width:36px;height:36px;border-radius:8px;background:var(--glass);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.8rem;transition:background .2s,border-color .2s;cursor:none}
+    .social-icon:hover{background:var(--glass-hover);border-color:var(--cyan)}
+    .footer-col h4{font-size:.75rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:20px}
+    .footer-col ul{list-style:none}
+    .footer-col li{margin-bottom:12px}
+    .footer-col a{font-size:.875rem;color:var(--muted);transition:color .2s}
+    .footer-col a:hover{color:var(--white)}
+    .newsletter-form{display:flex;gap:0;margin-top:16px}
+    .newsletter-input{flex:1;background:var(--glass);border:1px solid var(--border);border-right:none;border-radius:var(--radius-sm) 0 0 var(--radius-sm);padding:12px 16px;color:var(--white);font-family:var(--font-body);font-size:.875rem;outline:none;transition:border-color .2s}
+    .newsletter-input::placeholder{color:var(--muted)}
+    .newsletter-input:focus{border-color:rgba(0,240,255,.4)}
+    .newsletter-submit{background:var(--cyan);color:#000;border:none;border-radius:0 var(--radius-sm) var(--radius-sm) 0;padding:12px 20px;font-family:var(--font-display);font-weight:700;font-size:.8rem;cursor:none;transition:background .2s}
+    .newsletter-submit:hover{background:#33f4ff}
+    .footer-bottom{display:flex;justify-content:space-between;align-items:center;padding-top:32px;border-top:1px solid var(--border);font-size:.8rem;color:var(--muted);flex-wrap:wrap;gap:16px}
+
+    /* REVEAL */
+    .reveal{opacity:0;transform:translateY(32px)}
+    .reveal.visible{animation:reveal-up .8s var(--ease-out) forwards}
+    @keyframes reveal-up{to{opacity:1;transform:translateY(0)}}
+
+    /* GLOW BORDER */
+    .glow-border{position:relative}
+    .glow-border::before{content:'';position:absolute;inset:-1px;border-radius:inherit;z-index:-1;background:linear-gradient(135deg,var(--cyan),var(--violet),var(--cyan));background-size:200% 200%;animation:gradient-shift 4s linear infinite;opacity:0;transition:opacity .3s}
+    .glow-border:hover::before{opacity:1}
+    @keyframes gradient-shift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+
+    /* LOADER */
+    #loader{position:fixed;inset:0;z-index:9997;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:24px;transition:opacity .6s,visibility .6s}
+    #loader.hidden{opacity:0;visibility:hidden}
+    .loader-logo{font-family:var(--font-display);font-size:1.8rem;font-weight:800;letter-spacing:-.02em}
+    .loader-bar{width:200px;height:2px;background:var(--border);border-radius:2px;overflow:hidden}
+    .loader-fill{height:100%;background:linear-gradient(to right,var(--cyan),var(--violet));width:0%;animation:loader-anim 1.4s var(--ease-out) forwards}
+    @keyframes loader-anim{to{width:100%}}
+
+    @media(max-width:768px){
+      .section{padding:80px 0}
+      .hero-content{text-align:center}
+      .hero-sub{max-width:100%}
+      .hero-ctas{justify-content:center}
+      .section-header p{max-width:100%}
+      body{cursor:auto}
+      #cursor,#cursor-ring{display:none}
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LOADER -->
+  <div id="loader" aria-hidden="true">
+    <div class="loader-logo">Neural<span style="color:var(--cyan)">Forge</span></div>
+    <div class="loader-bar"><div class="loader-fill"></div></div>
+  </div>
+
+  <!-- CUSTOM CURSOR -->
+  <div id="cursor"><div id="cursor-dot"></div></div>
+  <div id="cursor-ring"></div>
+
+  <!-- NAVBAR -->
+  <nav id="navbar" role="navigation" aria-label="Main navigation">
+    <div class="container">
+      <a href="#" class="nav-logo">Neural<span>Forge</span></a>
+      <ul class="nav-links">
+        <li><a href="#services">Services</a></li>
+        <li><a href="#process">Process</a></li>
+        <li><a href="#testimonials">Clients</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+      <a href="#cta-section" class="btn btn-primary nav-cta">Get Started</a>
+      <button class="nav-hamburger" aria-label="Menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- MOBILE NAV DRAWER -->
+  <div id="mobile-nav" role="dialog" aria-modal="true" aria-label="Mobile navigation">
+    <div class="mobile-nav-backdrop" id="mobile-nav-backdrop"></div>
+    <div class="mobile-nav-drawer">
+      <button class="mobile-nav-close" id="mobile-nav-close" aria-label="Close menu">✕</button>
+      <a href="#services"     class="mobile-nav-link">Services</a>
+      <a href="#process"      class="mobile-nav-link">Process</a>
+      <a href="#stats"        class="mobile-nav-link">Results</a>
+      <a href="#testimonials" class="mobile-nav-link">Clients</a>
+      <a href="#contact"      class="mobile-nav-link">Contact</a>
+      <a href="#cta-section"  class="mobile-nav-cta">Get Started →</a>
+      <p class="mobile-nav-footer">hello@neuralforge.ai</p>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <section id="hero" aria-label="Hero">
+    <canvas id="hero-canvas" aria-hidden="true"></canvas>
+    <div class="hero-bg-gradient" aria-hidden="true"></div>
+    <div class="container">
+      <div class="hero-content">
+        <div class="hero-eyebrow">
+          <span class="hero-eyebrow-line"></span>
+          AI-Powered Business Transformation
+        </div>
+        <h1 class="hero-headline">
+          Automate Everything.
+          <em>Scale Infinitely.</em>
+        </h1>
+        <p class="hero-sub">
+          We design and deploy intelligent automation systems, autonomous AI agents, and real-time data pipelines that eliminate bottlenecks and unlock compounding growth.
+        </p>
+        <div class="hero-ctas">
+          <a href="#cta-section" class="btn btn-primary btn-arrow">
+            Start Your Project
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+          <a href="#services" class="btn btn-ghost">Explore Services</a>
+        </div>
+      </div>
+    </div>
+    <div class="hero-scroll-hint" aria-hidden="true">
+      <span>Scroll</span>
+      <div class="hero-scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- LOGO STRIP -->
+  <div id="logos" aria-label="Trusted by leading companies">
+    <p class="logo-strip-label">Trusted by forward-thinking teams</p>
+    <div class="logo-track-wrap">
+      <div class="logo-track" role="list">
+        <span class="logo-item" role="listitem">Acme Corp</span>
+        <span class="logo-item" role="listitem">Vertex Labs</span>
+        <span class="logo-item" role="listitem">Nexus AI</span>
+        <span class="logo-item" role="listitem">DataStream</span>
+        <span class="logo-item" role="listitem">CloudPeak</span>
+        <span class="logo-item" role="listitem">Synthos</span>
+        <span class="logo-item" role="listitem">Orion Systems</span>
+        <span class="logo-item" role="listitem">Cascade</span>
+        <span class="logo-item" aria-hidden="true">Acme Corp</span>
+        <span class="logo-item" aria-hidden="true">Vertex Labs</span>
+        <span class="logo-item" aria-hidden="true">Nexus AI</span>
+        <span class="logo-item" aria-hidden="true">DataStream</span>
+        <span class="logo-item" aria-hidden="true">CloudPeak</span>
+        <span class="logo-item" aria-hidden="true">Synthos</span>
+        <span class="logo-item" aria-hidden="true">Orion Systems</span>
+        <span class="logo-item" aria-hidden="true">Cascade</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SERVICES -->
+  <section id="services" class="section" aria-labelledby="services-heading">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="tag">What We Build</div>
+        <h2 id="services-heading">Intelligence at Every Layer<br><span class="gradient-text">of Your Stack</span></h2>
+        <p>Three core capabilities, deeply integrated, endlessly configurable for your specific business context and scale.</p>
+      </div>
+      <div class="services-grid">
+        <div class="service-card glow-border reveal" data-delay="0">
+          <div class="service-icon">⚡</div>
+          <h3>Workflow Automation</h3>
+          <p>End-to-end business process automation that eliminates manual work across operations, finance, HR, and customer experience. From simple triggers to complex multi-step orchestrations.</p>
+          <div class="card-num">01</div>
+        </div>
+        <div class="service-card glow-border reveal" data-delay="100">
+          <div class="service-icon" style="background:var(--violet-dim);border-color:rgba(139,92,246,.3)">🤖</div>
+          <h3>Autonomous AI Agents</h3>
+          <p>Purpose-built AI agents that reason, plan, and act on your behalf. Research agents, sales agents, support agents, and custom domain specialists trained on your proprietary data.</p>
+          <div class="card-num">02</div>
+        </div>
+        <div class="service-card glow-border reveal" data-delay="200">
+          <div class="service-icon" style="background:rgba(255,150,50,.1);border-color:rgba(255,150,50,.25)">🔁</div>
+          <h3>Data Pipelines</h3>
+          <p>Real-time data infrastructure that ingests, transforms, and delivers intelligence across your entire organization. From raw signals to actionable dashboards in milliseconds.</p>
+          <div class="card-num">03</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROCESS -->
+  <section id="process" class="section" aria-labelledby="process-heading">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="tag">How We Work</div>
+        <h2 id="process-heading">From Discovery<br>to <span class="gradient-text">Deployment</span></h2>
+        <p>A focused four-phase methodology designed to ship production-grade AI systems in weeks, not quarters.</p>
+      </div>
+      <div class="process-grid" id="process-grid">
+        <div class="process-connector" id="process-line"></div>
+        <div class="process-step reveal" data-step="1">
+          <div class="step-circle">01</div>
+          <h3>Discover</h3>
+          <p>Deep-dive audit of your workflows, data assets, and automation opportunities. We map every bottleneck and quantify the ROI of each initiative.</p>
+        </div>
+        <div class="process-step reveal" data-step="2" data-delay="100">
+          <div class="step-circle">02</div>
+          <h3>Design</h3>
+          <p>Architecture blueprints, data flow diagrams, and agent specifications. Every system is designed for observability, reliability, and future scale.</p>
+        </div>
+        <div class="process-step reveal" data-step="3" data-delay="200">
+          <div class="step-circle">03</div>
+          <h3>Build</h3>
+          <p>Rapid sprints with weekly demos. We ship incrementally so you see value from week one, not after a six-month waterfall project.</p>
+        </div>
+        <div class="process-step reveal" data-step="4" data-delay="300">
+          <div class="step-circle">04</div>
+          <h3>Optimize</h3>
+          <p>Post-launch monitoring, iteration, and expansion. Our systems learn and improve continuously as they process more of your real-world data.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section id="stats" class="section section--tight" aria-label="Company statistics">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-card reveal" data-delay="0">
+          <span class="stat-icon">🚀</span>
+          <div class="stat-num" data-target="150" data-suffix="+">0</div>
+          <div class="stat-label">Automations Deployed</div>
+        </div>
+        <div class="stat-card reveal" data-delay="80">
+          <span class="stat-icon">⏱️</span>
+          <div class="stat-num" data-target="94" data-suffix="%">0</div>
+          <div class="stat-label">Average Time Saved</div>
+        </div>
+        <div class="stat-card reveal" data-delay="160">
+          <span class="stat-icon">🏢</span>
+          <div class="stat-num" data-target="60" data-suffix="+">0</div>
+          <div class="stat-label">Enterprise Clients</div>
+        </div>
+        <div class="stat-card reveal" data-delay="240">
+          <span class="stat-icon">💰</span>
+          <div class="stat-num" data-target="12" data-suffix="x">0</div>
+          <div class="stat-label">Average ROI Multiple</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section id="testimonials" class="section" aria-labelledby="testi-heading">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="tag">Client Outcomes</div>
+        <h2 id="testi-heading">What Our Clients<br><span class="gradient-text">Actually Say</span></h2>
+      </div>
+      <div class="testi-carousel" role="region" aria-label="Testimonial carousel">
+        <div class="testi-track" id="testi-track">
+          <div class="testi-card">
+            <div class="testi-stars">★★★★★</div>
+            <p class="testi-quote">"NeuralForge automated our entire invoice reconciliation pipeline — what used to take 3 days now runs overnight without human intervention. ROI was evident within the first month."</p>
+            <div class="testi-author">
+              <div class="testi-avatar">AK</div>
+              <div><div class="testi-name">Alex Kim</div><div class="testi-role">CFO, Vertex Labs</div></div>
+            </div>
+          </div>
+          <div class="testi-card">
+            <div class="testi-stars">★★★★★</div>
+            <p class="testi-quote">"We deployed an AI sales agent that qualifies and nurtures leads 24/7. Our conversion rate went up 38% and our sales team now focuses exclusively on closing, not prospecting."</p>
+            <div class="testi-author">
+              <div class="testi-avatar">SM</div>
+              <div><div class="testi-name">Sarah Méndez</div><div class="testi-role">VP Growth, CloudPeak</div></div>
+            </div>
+          </div>
+          <div class="testi-card">
+            <div class="testi-stars">★★★★★</div>
+            <p class="testi-quote">"The real-time data pipeline they built processes 4 million events per day with under 200ms latency. Our product decisions are now driven by data that's actually current."</p>
+            <div class="testi-author">
+              <div class="testi-avatar">TW</div>
+              <div><div class="testi-name">Tom Walsh</div><div class="testi-role">CTO, DataStream Inc.</div></div>
+            </div>
+          </div>
+          <div class="testi-card">
+            <div class="testi-stars">★★★★★</div>
+            <p class="testi-quote">"What impressed me most was the speed — we went from kickoff to a live production system in under 6 weeks. The team's technical depth and communication were both outstanding."</p>
+            <div class="testi-author">
+              <div class="testi-avatar">JL</div>
+              <div><div class="testi-name">Jasmine Lee</div><div class="testi-role">Head of Ops, Synthos</div></div>
+            </div>
+          </div>
+          <div class="testi-card">
+            <div class="testi-stars">★★★★★</div>
+            <p class="testi-quote">"Our support volume scaled 3x without adding headcount because of the intelligent triage and response agents NeuralForge built. Customer satisfaction actually improved."</p>
+            <div class="testi-author">
+              <div class="testi-avatar">RB</div>
+              <div><div class="testi-name">Raj Bhatt</div><div class="testi-role">Director CX, Orion Systems</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="testi-controls">
+          <button class="testi-btn" id="testi-prev" aria-label="Previous testimonial">←</button>
+          <div class="testi-dots" id="testi-dots"></div>
+          <button class="testi-btn" id="testi-next" aria-label="Next testimonial">→</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section id="cta-section" class="section" aria-labelledby="cta-heading">
+    <div class="cta-glow" aria-hidden="true"></div>
+    <div class="container" style="position:relative;z-index:1">
+      <div class="reveal">
+        <div class="tag" style="margin:0 auto 24px">Ready to Build</div>
+        <h2 id="cta-heading">Your Competitors Are<br>Already <span class="gradient-text">Automating</span></h2>
+        <p>Every week you wait is a week they're compounding their advantage. Let's map out your automation roadmap — no commitment, just clarity.</p>
+        <div class="cta-actions">
+          <a href="mailto:hello@neuralforge.ai" class="btn btn-primary btn-arrow">
+            Book a Free Strategy Call
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+          <a href="#services" class="btn btn-ghost">View Services</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer id="contact" role="contentinfo">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="nav-logo">Neural<span style="color:var(--cyan)">Forge</span></div>
+          <p>We build the intelligent systems that let ambitious companies operate at a scale impossible with humans alone.</p>
+          <div class="footer-socials">
+            <a href="#" class="social-icon" aria-label="Twitter">𝕏</a>
+            <a href="#" class="social-icon" aria-label="LinkedIn">in</a>
+            <a href="#" class="social-icon" aria-label="GitHub">gh</a>
+          </div>
+        </div>
+        <div class="footer-col">
+          <h4>Services</h4>
+          <ul>
+            <li><a href="#services">Workflow Automation</a></li>
+            <li><a href="#services">AI Agents</a></li>
+            <li><a href="#services">Data Pipelines</a></li>
+            <li><a href="#services">Integrations</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="#">About Us</a></li>
+            <li><a href="#">Case Studies</a></li>
+            <li><a href="#">Blog</a></li>
+            <li><a href="#">Careers</a></li>
+            <li><a href="#">Privacy</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Stay Sharp</h4>
+          <p style="font-size:.875rem;margin-bottom:16px">Weekly insights on AI automation, tooling, and strategy for operators who want to stay ahead.</p>
+          <form class="newsletter-form" id="newsletter-form" novalidate>
+            <input type="email" class="newsletter-input" id="newsletter-email" placeholder="your@email.com" aria-label="Email address" autocomplete="email" required />
+            <button type="submit" class="newsletter-submit" id="newsletter-submit" aria-label="Subscribe">
+              <span id="newsletter-btn-text">→</span>
+            </button>
+          </form>
+          <p id="newsletter-success" style="display:none;margin-top:10px;font-size:.8rem;color:var(--cyan)">✓ You're in! Check your inbox.</p>
+          <p id="newsletter-error"   style="display:none;margin-top:10px;font-size:.8rem;color:#ff6b6b">Something went wrong — please try again.</p>
+          <p id="newsletter-invalid" style="display:none;margin-top:10px;font-size:.8rem;color:#ffaa44">Please enter a valid email address.</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2025 NeuralForge. All rights reserved.</span>
+        <span>Built with precision in San Francisco</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+  (() => {
+    'use strict';
+
+    /* DEVICE CHECK */
+    const isLowPower = () =>
+      navigator.hardwareConcurrency <= 2 ||
+      window.matchMedia('(max-width:768px)').matches ||
+      /Android|iPhone|iPad/i.test(navigator.userAgent);
+
+    /* LOADER */
+    window.addEventListener('load', () => {
+      setTimeout(() => document.getElementById('loader').classList.add('hidden'), 1600);
+    });
+
+    /* CUSTOM CURSOR */
+    const dot  = document.getElementById('cursor-dot');
+    const ring = document.getElementById('cursor-ring');
+    if (dot && ring) {
+      let mx=0,my=0,rx=0,ry=0;
+      document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; });
+      const animateCursor = () => {
+        dot.style.left  = mx+'px'; dot.style.top  = my+'px';
+        rx += (mx-rx)*.12; ry += (my-ry)*.12;
+        ring.style.left = rx+'px'; ring.style.top = ry+'px';
+        requestAnimationFrame(animateCursor);
+      };
+      animateCursor();
+      document.querySelectorAll('a,button,.service-card,.testi-card,.stat-card').forEach(el => {
+        el.addEventListener('mouseenter', () => ring.classList.add('hovered'));
+        el.addEventListener('mouseleave', () => ring.classList.remove('hovered'));
+      });
+    }
+
+    /* NAVBAR SCROLL */
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      navbar.classList.toggle('scrolled', window.scrollY > 60);
+    }, { passive:true });
+
+    /* THREE.JS NEURAL NETWORK */
+    const canvas = document.getElementById('hero-canvas');
+    if (canvas && typeof THREE !== 'undefined') {
+      const scene    = new THREE.Scene();
+      const camera   = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+      camera.position.z = isLowPower() ? 18 : 14;
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias:!isLowPower(), alpha:true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, isLowPower()?1:2));
+      renderer.setClearColor(0x000000, 0);
+
+      const NODE_COUNT  = isLowPower() ? 40 : 90;
+      const nodePositions = [];
+      const nodeGroup   = new THREE.Group();
+      const nodeMat     = new THREE.MeshBasicMaterial({ color:0x00f0ff });
+      for (let i=0; i<NODE_COUNT; i++) {
+        const geo  = new THREE.SphereGeometry(.05+Math.random()*.06, 8, 8);
+        const mesh = new THREE.Mesh(geo, nodeMat.clone());
+        const x=(Math.random()-.5)*30, y=(Math.random()-.5)*18, z=(Math.random()-.5)*12;
+        mesh.position.set(x,y,z);
+        mesh.userData = { ox:x,oy:y,oz:z,phase:Math.random()*Math.PI*2,speed:.3+Math.random()*.5 };
+        nodePositions.push(new THREE.Vector3(x,y,z));
+        nodeGroup.add(mesh);
+      }
+      scene.add(nodeGroup);
+
+      const edgeMat   = new THREE.LineBasicMaterial({ color:0x8b5cf6,transparent:true,opacity:.18 });
+      const edgeGroup = new THREE.Group();
+      const CDIST     = isLowPower() ? 6 : 5;
+      for (let i=0; i<NODE_COUNT; i++) {
+        for (let j=i+1; j<NODE_COUNT; j++) {
+          if (nodePositions[i].distanceTo(nodePositions[j]) < CDIST) {
+            const geo = new THREE.BufferGeometry().setFromPoints([nodePositions[i],nodePositions[j]]);
+            edgeGroup.add(new THREE.Line(geo, edgeMat.clone()));
+          }
+        }
+      }
+      scene.add(edgeGroup);
+
+      let particleSystem;
+      if (!isLowPower()) {
+        const PART=500, pGeo=new THREE.BufferGeometry(), pos=new Float32Array(PART*3);
+        for (let i=0;i<PART;i++) { pos[i*3]=(Math.random()-.5)*40; pos[i*3+1]=(Math.random()-.5)*24; pos[i*3+2]=(Math.random()-.5)*20; }
+        pGeo.setAttribute('position', new THREE.BufferAttribute(pos,3));
+        particleSystem = new THREE.Points(pGeo, new THREE.PointsMaterial({color:0x00f0ff,size:.04,transparent:true,opacity:.35}));
+        scene.add(particleSystem);
+      }
+
+      const mouse={x:0,y:0,tx:0,ty:0};
+      document.addEventListener('mousemove', e => { mouse.tx=(e.clientX/window.innerWidth-.5)*2; mouse.ty=(e.clientY/window.innerHeight-.5)*2; }, {passive:true});
+
+      let t=0;
+      const animate = () => {
+        requestAnimationFrame(animate);
+        t += 0.006;
+        mouse.x += (mouse.tx-mouse.x)*.04;
+        mouse.y += (mouse.ty-mouse.y)*.04;
+        nodeGroup.rotation.y = mouse.x*.3;
+        nodeGroup.rotation.x = mouse.y*-.2;
+        edgeGroup.rotation.y = mouse.x*.3;
+        edgeGroup.rotation.x = mouse.y*-.2;
+        nodeGroup.children.forEach(mesh => {
+          const d=mesh.userData;
+          mesh.position.y = d.oy+Math.sin(t*d.speed+d.phase)*.4;
+          mesh.position.x = d.ox+Math.cos(t*d.speed*.7+d.phase)*.25;
+          mesh.scale.setScalar(.9+.1*Math.sin(t*2+d.phase));
+        });
+        if (particleSystem) { particleSystem.rotation.y=t*.04; particleSystem.rotation.x=t*.015; }
+        renderer.render(scene, camera);
+      };
+      animate();
+
+      window.addEventListener('resize', () => {
+        camera.aspect=window.innerWidth/window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    }
+
+    /* SERVICE CARD 3D TILT */
+    document.querySelectorAll('.service-card').forEach(card => {
+      card.addEventListener('mousemove', e => {
+        const r=card.getBoundingClientRect();
+        const dx=(e.clientX-r.left-r.width/2)/(r.width/2);
+        const dy=(e.clientY-r.top-r.height/2)/(r.height/2);
+        card.style.transform=`perspective(800px) rotateY(${dx*8}deg) rotateX(${-dy*8}deg) translateZ(4px)`;
+      });
+      card.addEventListener('mouseleave', () => { card.style.transform=''; });
+    });
+
+    /* SCROLL REVEAL */
+    const revealObs = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const el=entry.target, delay=parseInt(el.dataset.delay||0);
+          setTimeout(() => el.classList.add('visible'), delay);
+          revealObs.unobserve(el);
+        }
+      });
+    }, { threshold:.15 });
+    document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+
+    /* PROCESS LINE ANIMATION */
+    const processLine = document.getElementById('process-line');
+    if (processLine) {
+      const lineObs = new IntersectionObserver(entries => {
+        if (entries[0].isIntersecting) {
+          processLine.classList.add('visible');
+          document.querySelectorAll('.process-step').forEach((step,i) => {
+            setTimeout(() => step.classList.add('active'), i*250);
+          });
+          lineObs.disconnect();
+        }
+      }, { threshold:.3 });
+      lineObs.observe(document.getElementById('process-grid'));
+    }
+
+    /* STAT COUNTER */
+    const countObs = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        const el=entry.target, target=parseInt(el.dataset.target), suffix=el.dataset.suffix||'';
+        let current=0;
+        const step=target/60;
+        const timer=setInterval(() => {
+          current+=step;
+          if (current>=target) { current=target; clearInterval(timer); }
+          el.textContent=Math.floor(current)+suffix;
+        }, 16);
+        countObs.unobserve(el);
+      });
+    }, { threshold:.5 });
+    document.querySelectorAll('.stat-num[data-target]').forEach(el => countObs.observe(el));
+
+    /* TESTIMONIAL CAROUSEL */
+    (() => {
+      const track=document.getElementById('testi-track');
+      const dotsWrap=document.getElementById('testi-dots');
+      if (!track) return;
+      const cards=track.querySelectorAll('.testi-card');
+      const VISIBLE=() => window.innerWidth<600?1:window.innerWidth<900?2:3;
+      let current=0;
+      const total=cards.length;
+
+      const rebuildDots = () => {
+        dotsWrap.innerHTML='';
+        const vis=VISIBLE(), pages=total-vis+1;
+        for (let i=0;i<pages;i++) {
+          const d=document.createElement('div');
+          d.className='testi-dot'+(i===current?' active':'');
+          d.addEventListener('click',()=>goTo(i));
+          dotsWrap.appendChild(d);
+        }
+      };
+
+      const goTo = idx => {
+        const vis=VISIBLE(), pages=total-vis+1;
+        current=Math.max(0,Math.min(idx,pages-1));
+        const cardW=track.querySelector('.testi-card').getBoundingClientRect().width+24;
+        track.style.transform=`translateX(${-current*cardW}px)`;
+        dotsWrap.querySelectorAll('.testi-dot').forEach((d,i)=>d.classList.toggle('active',i===current));
+      };
+
+      document.getElementById('testi-prev').addEventListener('click',()=>goTo(current-1));
+      document.getElementById('testi-next').addEventListener('click',()=>goTo(current+1));
+      rebuildDots();
+      window.addEventListener('resize',()=>{ rebuildDots(); goTo(0); });
+      setInterval(()=>goTo((current+1)%(total-VISIBLE()+1)),5000);
+    })();
+
+    /* GSAP PARALLAX */
+    if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+      gsap.registerPlugin(ScrollTrigger);
+      gsap.to('.hero-content', {
+        yPercent:20, ease:'none',
+        scrollTrigger:{trigger:'#hero',start:'top top',end:'bottom top',scrub:1}
+      });
+      gsap.utils.toArray('.section-header').forEach(el => {
+        gsap.from(el.children, {
+          y:40,opacity:0,stagger:.12,duration:.8,ease:'power3.out',
+          scrollTrigger:{trigger:el,start:'top 80%',toggleActions:'play none none none'}
+        });
+      });
+    }
+
+    /* MOBILE NAV */
+    (() => {
+      const hamburger  = document.querySelector('.nav-hamburger');
+      const mobileNav  = document.getElementById('mobile-nav');
+      const closeBtn   = document.getElementById('mobile-nav-close');
+      const backdrop   = document.getElementById('mobile-nav-backdrop');
+      const mobileLinks= mobileNav.querySelectorAll('.mobile-nav-link,.mobile-nav-cta');
+
+      const openMenu = () => {
+        mobileNav.classList.add('open');
+        hamburger.classList.add('active');
+        hamburger.setAttribute('aria-expanded','true');
+        document.body.style.overflow='hidden';
+        mobileLinks.forEach((link,i) => {
+          link.style.opacity='0'; link.style.transform='translateX(20px)';
+          setTimeout(()=>{
+            link.style.transition=`opacity .3s ${i*.05}s var(--ease-out),transform .3s ${i*.05}s var(--ease-out)`;
+            link.style.opacity='1'; link.style.transform='translateX(0)';
+          }, 80);
+        });
+      };
+
+      const closeMenu = () => {
+        mobileNav.classList.remove('open');
+        hamburger.classList.remove('active');
+        hamburger.setAttribute('aria-expanded','false');
+        document.body.style.overflow='';
+      };
+
+      hamburger.addEventListener('click',()=>mobileNav.classList.contains('open')?closeMenu():openMenu());
+      closeBtn.addEventListener('click', closeMenu);
+      backdrop.addEventListener('click', closeMenu);
+
+      mobileLinks.forEach(link => {
+        link.addEventListener('click', e => {
+          const href=link.getAttribute('href');
+          if (href && href.startsWith('#')) {
+            e.preventDefault();
+            closeMenu();
+            setTimeout(() => {
+              const target=document.querySelector(href);
+              if (target) target.scrollIntoView({behavior:'smooth',block:'start'});
+            }, 350);
+          }
+        });
+      });
+
+      document.addEventListener('keydown', e => {
+        if (e.key==='Escape' && mobileNav.classList.contains('open')) closeMenu();
+      });
+    })();
+
+    /* NEWSLETTER FORM */
+    (() => {
+      const form       = document.getElementById('newsletter-form');
+      const emailInput = document.getElementById('newsletter-email');
+      const submitBtn  = document.getElementById('newsletter-submit');
+      const btnText    = document.getElementById('newsletter-btn-text');
+      const msgSuccess = document.getElementById('newsletter-success');
+      const msgError   = document.getElementById('newsletter-error');
+      const msgInvalid = document.getElementById('newsletter-invalid');
+
+      const hideAll   = () => { msgSuccess.style.display=msgError.style.display=msgInvalid.style.display='none'; };
+      const setLoading= on => { submitBtn.disabled=on; btnText.textContent=on?'…':'→'; submitBtn.style.opacity=on?'.6':'1'; };
+      const isValid   = email => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim());
+
+      form.addEventListener('submit', async e => {
+        e.preventDefault();
+        hideAll();
+        const email=emailInput.value.trim();
+        if (!isValid(email)) { msgInvalid.style.display='block'; emailInput.focus(); return; }
+        setLoading(true);
+        try {
+          /* Replace 'YOUR_FORM_ID' with your Formspree form ID to make this live */
+          const ENDPOINT='https://formspree.io/f/YOUR_FORM_ID';
+          const res=await fetch(ENDPOINT,{
+            method:'POST',
+            headers:{'Content-Type':'application/json','Accept':'application/json'},
+            body:JSON.stringify({email,source:'website_footer'})
+          });
+          if (res.ok) {
+            msgSuccess.style.display='block';
+            emailInput.value='';
+            submitBtn.disabled=true;
+            btnText.textContent='✓';
+          } else { throw new Error(res.status); }
+        } catch(err) {
+          console.error(err);
+          msgError.style.display='block';
+          setLoading(false);
+        }
+      });
+
+      emailInput.addEventListener('input',()=>{ if(msgInvalid.style.display!=='none') msgInvalid.style.display='none'; });
+    })();
+
+    /* SMOOTH ANCHOR SCROLL */
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        const href=a.getAttribute('href');
+        if (href==='#') return;
+        const target=document.querySelector(href);
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior:'smooth', block:'start' });
+        }
+      });
+    });
+
+  })();
+  </script>
+</body>
+</html>
